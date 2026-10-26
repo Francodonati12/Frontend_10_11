@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getProductos, crearProducto, eliminarProducto, getProductImage } from '../services/api';
 import ProductImage from '../components/ProductImage';
+import SubirImagenModal from '../components/SubirImagenModal';
+import { urlImagen } from '../utils/imagenes';
 
 export default function AdminPortal() {
   const { user, isAdmin, loginAdmin, logout } = useAuth();
@@ -18,6 +20,8 @@ export default function AdminPortal() {
   const [cargandoProductos, setCargandoProductos] = useState(false);
   const [accionEnCurso, setAccionEnCurso] = useState(false);
   const [notificacion, setNotificacion] = useState(null);
+  // Clase 10: modal de subida de imagen
+  const [modalImagen, setModalImagen] = useState(null); // producto seleccionado o null
 
   // Formulario para Agregar Producto
   const [nuevoProducto, setNuevoProducto] = useState({
@@ -559,48 +563,86 @@ export default function AdminPortal() {
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {productos.map((prod) => (
-                  <div
-                    key={prod.id}
-                    className="bg-[#0b0c10] border border-[#232538] hover:border-orange-500/40 rounded-2xl p-4 flex flex-col justify-between gap-3 transition-all"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-neutral-400 mb-2">
-                        <span className="font-mono text-orange-400 font-bold">ID: #{prod.id}</span>
-                        <span>Stock: {prod.stock} u.</span>
+                {productos.map((prod) => {
+                  const imgUrl = urlImagen(prod) || prod.imagen || getProductImage(prod);
+                  return (
+                    <div
+                      key={prod.id}
+                      className="bg-[#0b0c10] border border-[#232538] hover:border-orange-500/40 rounded-2xl p-4 flex flex-col justify-between gap-3 transition-all"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between text-xs text-neutral-400 mb-2">
+                          <span className="font-mono text-orange-400 font-bold">ID: #{prod.id}</span>
+                          <span>Stock: {prod.stock} u.</span>
+                        </div>
+                        <h4 className="font-bold text-white text-sm line-clamp-1 mb-1">
+                          {prod.nombre}
+                        </h4>
+                        <p className="text-lg font-black text-orange-500 mb-2">
+                          ${prod.precio_final.toLocaleString('es-AR')}
+                        </p>
+                        {/* Clase 10: aspect-square con urlImagen */}
+                        <div className="aspect-square overflow-hidden bg-gray-100 rounded">
+                          {imgUrl ? (
+                            <img
+                              src={imgUrl}
+                              alt={prod.nombre}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-800 text-neutral-500 gap-2">
+                              <span className="text-3xl">🖼️</span>
+                              <span className="text-[11px] font-medium">Sin imagen</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <h4 className="font-bold text-white text-sm line-clamp-1 mb-1">
-                        {prod.nombre}
-                      </h4>
-                      <p className="text-lg font-black text-orange-500 mb-2">
-                        ${prod.precio_final.toLocaleString('es-AR')}
-                      </p>
-                      {/* Imagen asociada debajo del título */}
-                      <ProductImage
-                        src={prod.imagen || getProductImage(prod)}
-                        alt={prod.nombre}
-                        aspectRatio="aspect-[16/9]"
-                      />
-                    </div>
 
-                    <div className="pt-2 border-t border-[#232538]">
-                      {/* BOTÓN QUITAR PRODUCTO DINÁMICAMENTE */}
-                      <button
-                        onClick={() => handleEliminarProducto(prod.id, prod.nombre)}
-                        disabled={accionEnCurso}
-                        className="w-full py-2 bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white border border-red-800/60 hover:border-red-600 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                        title="Eliminar este producto de la base de datos"
-                      >
-                        <span>🗑️</span>
-                        <span>Quitar Producto</span>
-                      </button>
+                      <div className="pt-2 border-t border-[#232538] space-y-2">
+                        {/* Clase 10: Botón para abrir el modal de imagen */}
+                        <button
+                          onClick={() => setModalImagen(prod)}
+                          disabled={accionEnCurso}
+                          className="w-full py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:border-orange-500/60 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <span>🖼️</span>
+                          <span>Cambiar imagen</span>
+                        </button>
+                        {/* BOTON QUITAR PRODUCTO DINAMICAMENTE */}
+                        <button
+                          onClick={() => handleEliminarProducto(prod.id, prod.nombre)}
+                          disabled={accionEnCurso}
+                          className="w-full py-2 bg-red-950/40 hover:bg-red-600 text-red-300 hover:text-white border border-red-800/60 hover:border-red-600 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          title="Eliminar este producto de la base de datos"
+                        >
+                          <span>🗑️</span>
+                          <span>Quitar Producto</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {/* Clase 10: Modal de subida de imagen */}
+      {modalImagen && (
+        <SubirImagenModal
+          producto={modalImagen}
+          onCerrar={() => setModalImagen(null)}
+          onExito={() => {
+            setModalImagen(null);
+            refrescarProductos();
+            setNotificacion({
+              tipo: 'exito',
+              texto: `✅ Imagen del producto "${modalImagen.nombre}" actualizada correctamente.`,
+            });
+          }}
+        />
       )}
     </div>
   );

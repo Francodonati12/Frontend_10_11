@@ -9,6 +9,7 @@ export default function Catalogo() {
   const [page, setPage] = useState(0);
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [lento, setLento] = useState(false); // Clase 11: banner de servidor en frío
   const [notificacion, setNotificacion] = useState(null);
   const limit = 8; // Mejor límite para vista en cuadrícula
 
@@ -27,6 +28,16 @@ export default function Catalogo() {
   useEffect(() => {
     cargarProductos();
   }, [page, busqueda]);
+
+  // Clase 11: detectar backend en frío (cold start)
+  useEffect(() => {
+    if (!cargando) {
+      setLento(false);
+      return;
+    }
+    const t = setTimeout(() => setLento(true), 5000);
+    return () => clearTimeout(t);
+  }, [cargando]);
 
   const handleBusqueda = (e) => {
     setPage(0);
@@ -159,7 +170,13 @@ export default function Catalogo() {
         {cargando ? (
           <div className="py-20 text-center space-y-3">
             <div className="w-10 h-10 border-3 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto"></div>
-            <p className="text-neutral-400 text-sm font-medium">Cargando catálogo dinámico...</p>
+            {lento ? (
+              <p className="text-amber-400 text-sm font-medium max-w-xs mx-auto">
+                ⏳ Despertando el servidor, la primera visita puede tardar un minuto…
+              </p>
+            ) : (
+              <p className="text-neutral-400 text-sm font-medium">Cargando productos…</p>
+            )}
           </div>
         ) : productos && productos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -3,6 +3,7 @@ import { useCarrito } from '../context/CarritoContext';
 import { useAuth } from '../context/AuthContext';
 import ProductImage from './ProductImage';
 import { getProductImage } from '../services/api';
+import { urlImagen } from '../utils/imagenes';
 
 export function ProductCard({
   producto,
@@ -27,7 +28,10 @@ export function ProductCard({
   const cuotasValor = cuotas_valor ?? p.cuotas_valor;
   const garantiaMeses = garantia_meses ?? p.garantia_meses;
   const stockUnidades = stock ?? p.stock ?? 0;
-  const imagen = p.imagen || getProductImage(p);
+  // Clase 10: intentar primero la URL real de la API (imagen_url),
+  // con fallback a la imagen local o a la librería de Unsplash.
+  const imagenApiUrl = urlImagen(p);
+  const imagen = imagenApiUrl || p.imagen || getProductImage(p);
 
   const productoParaCarrito = producto || {
     id: p.id,
@@ -89,13 +93,32 @@ export function ProductCard({
           <span className="text-xs text-neutral-400 font-medium">ARS</span>
         </div>
 
-        {/* 2. GESTIÓN DE IMÁGENES DINÁMICAS: RENDERIZADA CLARAMENTE DEBAJO DEL PRODUCTO */}
+        {/* 2. GESTIÓN DE IMÁGENES — Clase 10: aspect-square, placeholder si no hay URL */}
         <div className="pt-1">
-          <ProductImage
-            src={imagen}
-            alt={name}
-            aspectRatio="aspect-[16/10]"
-          />
+          <div className="aspect-square overflow-hidden bg-gray-100 rounded">
+            {imagenApiUrl ? (
+              <img
+                src={imagenApiUrl}
+                alt={name}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+            ) : imagen && imagen !== '' ? (
+              /* Fallback: imagen de Unsplash u otras fuentes locales */
+              <img
+                src={imagen}
+                alt={name}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              /* Placeholder gris con ícono cuando no hay imagen */
+              <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-800 text-neutral-500 gap-2">
+                <span className="text-3xl">🖼️</span>
+                <span className="text-[11px] font-medium">Sin imagen</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
