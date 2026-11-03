@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { subirImagen } from "../services/api";
 
 /**
@@ -30,15 +30,21 @@ export default function SubirImagenModal({ producto, onCerrar, onExito }) {
 
     // Validación de tipo
     if (!file.type.startsWith("image/")) {
-      setErrorLocal("El archivo seleccionado no es una imagen válida.");
+      setErrorLocal("El archivo no es una imagen válida");
       if (inputRef.current) inputRef.current.value = "";
+      setArchivo(null);
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview(null);
       return;
     }
 
     // Validación de tamaño (2 MB)
     if (file.size > 2 * 1024 * 1024) {
-      setErrorLocal("El archivo supera el tamaño máximo de 2 MB.");
+      setErrorLocal("La imagen supera los 2 MB");
       if (inputRef.current) inputRef.current.value = "";
+      setArchivo(null);
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview(null);
       return;
     }
 
@@ -184,7 +190,7 @@ export default function SubirImagenModal({ producto, onCerrar, onExito }) {
             disabled={!archivo || subiendo}
             className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-black font-extrabold text-sm rounded-xl transition-all shadow-md disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
-            {subiendo ? "Subiendo…" : "Subir imagen 🚀"}
+            {subiendo ? "Subiendo…" : "Subir imagen"}
           </button>
         </div>
       </div>

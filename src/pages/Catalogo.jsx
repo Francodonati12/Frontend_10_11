@@ -13,30 +13,35 @@ export default function Catalogo() {
   const [notificacion, setNotificacion] = useState(null);
   const limit = 8; // Mejor límite para vista en cuadrícula
 
-  const { isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
 
   const cargarProductos = () => {
     setCargando(true);
+    setLento(false);
     getProductos({ page, limit, nombre: busqueda })
       .then((data) => {
         if (data) setProductos(data);
       })
       .catch((error) => console.error('Error al cargar productos:', error))
-      .finally(() => setCargando(false));
+      .finally(() => {
+        setCargando(false);
+        setLento(false);
+      });
   };
 
   useEffect(() => {
     cargarProductos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, busqueda]);
 
-  // Clase 11: detectar backend en frío (cold start)
+  // Clase 11: detectar backend en frío (cold start) con temporizador de 5 segundos
   useEffect(() => {
-    if (!cargando) {
-      setLento(false);
-      return;
-    }
-    const t = setTimeout(() => setLento(true), 5000);
-    return () => clearTimeout(t);
+    if (!cargando) return;
+    const timer = setTimeout(() => {
+      setLento(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
   }, [cargando]);
 
   const handleBusqueda = (e) => {
@@ -171,8 +176,8 @@ export default function Catalogo() {
           <div className="py-20 text-center space-y-3">
             <div className="w-10 h-10 border-3 border-orange-500/30 border-t-orange-500 rounded-full animate-spin mx-auto"></div>
             {lento ? (
-              <p className="text-amber-400 text-sm font-medium max-w-xs mx-auto">
-                ⏳ Despertando el servidor, la primera visita puede tardar un minuto…
+              <p className="text-amber-400 text-sm font-medium max-w-md mx-auto">
+                Despertando el servidor, la primera visita puede tardar un minuto…
               </p>
             ) : (
               <p className="text-neutral-400 text-sm font-medium">Cargando productos…</p>

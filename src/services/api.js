@@ -110,7 +110,7 @@ export async function getProductos({ page = 0, limit = 8, nombre = "" } = {}) {
   }
 }
 
-function authHeaders(isJson = true) {
+export function authHeaders(isJson = false) {
   const token = localStorage.getItem("access_token");
   const headers = {};
   if (token) {
@@ -254,24 +254,19 @@ export async function subirImagen(productoId, archivo) {
   const fd = new FormData();
   fd.append("archivo", archivo);
 
-  // Solo se envía el header de autorización (sin Content-Type)
-  const headers = {};
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
+  // CRÍTICO: En las cabeceras se incluye ÚNICAMENTE el token de autorización (authHeaders())
+  // NO se agrega "Content-Type" a mano para permitir el multipart boundary automático del navegador
   const res = await fetch(`${BASE_URL}/productos/${productoId}/imagen`, {
     method: "POST",
-    headers,
+    headers: authHeaders(),
     body: fd,
   });
 
   if (!res.ok) {
-    if (res.status === 403) throw new Error("No tenés permisos de administrador");
+    if (res.status === 403) throw new Error("Sin permisos de administrador");
     if (res.status === 404) throw new Error("Producto no encontrado");
-    if (res.status === 413) throw new Error("El archivo supera el tamaño máximo de 2 MB");
-    if (res.status === 415) throw new Error("El archivo enviado no es una imagen válida");
+    if (res.status === 413) throw new Error("La imagen supera los 2 MB");
+    if (res.status === 415) throw new Error("El archivo no es una imagen válida");
     const data = await res.json().catch(() => ({}));
     throw new Error(data.detail || `Error al subir la imagen (HTTP ${res.status})`);
   }

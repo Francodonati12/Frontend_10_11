@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useCarrito } from '../context/CarritoContext';
 import { useAuth } from '../context/AuthContext';
-import ProductImage from './ProductImage';
 import { getProductImage } from '../services/api';
 import { urlImagen } from '../utils/imagenes';
 
@@ -28,10 +27,9 @@ export function ProductCard({
   const cuotasValor = cuotas_valor ?? p.cuotas_valor;
   const garantiaMeses = garantia_meses ?? p.garantia_meses;
   const stockUnidades = stock ?? p.stock ?? 0;
-  // Clase 10: intentar primero la URL real de la API (imagen_url),
-  // con fallback a la imagen local o a la librería de Unsplash.
-  const imagenApiUrl = urlImagen(p);
-  const imagen = imagenApiUrl || p.imagen || getProductImage(p);
+  // Clase 10: Obtener la URL con urlImagen(producto)
+  const url = urlImagen(producto || p);
+  const imagen = url || p.imagen || getProductImage(p);
 
   const productoParaCarrito = producto || {
     id: p.id,
@@ -96,26 +94,29 @@ export function ProductCard({
         {/* 2. GESTIÓN DE IMÁGENES — Clase 10: aspect-square, placeholder si no hay URL */}
         <div className="pt-1">
           <div className="aspect-square overflow-hidden bg-gray-100 rounded">
-            {imagenApiUrl ? (
+            {url ? (
               <img
-                src={imagenApiUrl}
-                alt={name}
-                loading="lazy"
-                className="w-full h-full object-cover"
-              />
-            ) : imagen && imagen !== '' ? (
-              /* Fallback: imagen de Unsplash u otras fuentes locales */
-              <img
-                src={imagen}
-                alt={name}
+                src={url}
+                alt={producto?.nombre || name}
                 loading="lazy"
                 className="w-full h-full object-cover"
               />
             ) : (
-              /* Placeholder gris con ícono cuando no hay imagen */
-              <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-800 text-neutral-500 gap-2">
-                <span className="text-3xl">🖼️</span>
-                <span className="text-[11px] font-medium">Sin imagen</span>
+              <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400 select-none">
+                <svg
+                  className="w-12 h-12 text-gray-400 mb-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="text-xs font-semibold text-gray-500">Sin imagen</span>
               </div>
             )}
           </div>
